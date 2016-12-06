@@ -120,7 +120,7 @@ public class GraphiteBackendListenerClient extends AbstractBackendListenerClient
     private Map<String, Float> koPercentiles;
     private Map<String, Float> allPercentiles;
 
-    private List<SampleResult> sampleResults;
+    private List<SampleResult> allSampleResults;
 
     private GraphiteMetricsSender graphiteMetricsManager;
 
@@ -232,13 +232,13 @@ public class GraphiteBackendListenerClient extends AbstractBackendListenerClient
     @Override
     public void handleSampleResults(List<SampleResult> sampleResults,
                                     BackendListenerContext context) {
-        this.sampleResults.addAll(sampleResults);
+        allSampleResults.addAll(sampleResults);
     }
 
-    public void handleLastSampleResults() {
+    public void getSampleMetricsFromAllSampleResults() {
         boolean samplersToFilterMatch;
         synchronized (LOCK) {
-            for (SampleResult sampleResult : this.sampleResults) {
+            for (SampleResult sampleResult : allSampleResults) {
                 getUserMetrics().add(sampleResult);
 
                 if(!summaryOnly) {
@@ -256,7 +256,7 @@ public class GraphiteBackendListenerClient extends AbstractBackendListenerClient
                 SamplerMetric cumulatedMetrics = getSamplerMetric(CUMULATED_METRICS);
                 cumulatedMetrics.add(sampleResult);
             }
-            this.sampleResults.clear();
+            allSampleResults.clear();
         }
     }
 
@@ -301,7 +301,7 @@ public class GraphiteBackendListenerClient extends AbstractBackendListenerClient
         this.graphiteMetricsManager = (GraphiteMetricsSender) clazz.newInstance();
         graphiteMetricsManager.setup(graphiteHost, graphitePort, rootMetricsPrefix);
 
-        sampleResults = new ArrayList<>();
+        allSampleResults = new ArrayList<>();
 
         if (useRegexpForSamplersList) {
             pattern = Pattern.compile(samplersList);
@@ -328,7 +328,7 @@ public class GraphiteBackendListenerClient extends AbstractBackendListenerClient
             LOGGER.error("Error waiting for end of scheduler");
         }
         // Send last set of data before ending
-        handleLastSampleResults();
+        getSampleMetricsFromAllSampleResults();
         sendMetrics();
 
         samplersToFilter.clear();
