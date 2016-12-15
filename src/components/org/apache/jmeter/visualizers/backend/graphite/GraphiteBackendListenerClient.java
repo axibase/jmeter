@@ -120,7 +120,8 @@ public class GraphiteBackendListenerClient extends AbstractBackendListenerClient
     private Map<String, Float> koPercentiles;
     private Map<String, Float> allPercentiles;
 
-    private List<SampleResult> allSampleResults;
+    private List<SampleResult> otherSampleResults;
+    private List<SampleResult> sameQuerySampleResults;
 
     private GraphiteMetricsSender graphiteMetricsManager;
 
@@ -159,12 +160,8 @@ public class GraphiteBackendListenerClient extends AbstractBackendListenerClient
                 metric.resetForTimeInterval();
             }
         }
-//        graphiteMetricsManager.addMetric(timestampInSeconds, TEST_CONTEXT_NAME, METRIC_MIN_ACTIVE_THREADS, Integer.toString(getUserMetrics().getMinActiveThreads()));
-//        graphiteMetricsManager.addMetric(timestampInSeconds, TEST_CONTEXT_NAME, METRIC_MAX_ACTIVE_THREADS, Integer.toString(getUserMetrics().getMaxActiveThreads()));
-//        graphiteMetricsManager.addMetric(timestampInSeconds, TEST_CONTEXT_NAME, METRIC_MEAN_ACTIVE_THREADS, Integer.toString(getUserMetrics().getMeanActiveThreads()));
-//        graphiteMetricsManager.addMetric(timestampInSeconds, TEST_CONTEXT_NAME, METRIC_STARTED_THREADS, Integer.toString(getUserMetrics().getStartedThreads()));
-//        graphiteMetricsManager.addMetric(timestampInSeconds, TEST_CONTEXT_NAME, METRIC_FINISHED_THREADS, Integer.toString(getUserMetrics().getFinishedThreads()));
 
+        // after we call it -- all collected metrics in grMetManager are GONE!
         graphiteMetricsManager.writeAndSendMetrics();
     }
 
@@ -232,15 +229,53 @@ public class GraphiteBackendListenerClient extends AbstractBackendListenerClient
     @Override
     public void handleSampleResults(List<SampleResult> sampleResults,
                                     BackendListenerContext context) {
-        allSampleResults.addAll(sampleResults);
+        synchronized (LOCK) {
+
+            String firstMetricName = sameQuerySampleResults.size() > 0 ?
+                    sameQuerySampleResults.get(0).getSampleLabel() : null;
+            String lastMetricName;
+            int counter;
+
+            do {
+                counter = 1;
+                lastMetricName = sampleResults.get(0).getSampleLabel();
+
+                for (SampleResult sampleResult : sampleResults) {
+                    if (! lastMetricName.equals(sampleResult.getSampleLabel())) {
+                        // counting how many there are different types of metrics
+                        lastMetricName = sampleResult.getSampleLabel();
+                        counter++;
+                    }
+
+                    if (firstMetricName == null) {
+                        firstMetricName = sampleResult.getSampleLabel();
+                        sameQuerySampleResults.add(sampleResult);
+                        continue;
+                    }
+
+                    if (firstMetricName.equals(sampleResult.getSampleLabel())) {
+                        sameQuerySampleResults.add(sampleResult);
+                    } else {
+                        otherSampleResults.add(sampleResult);
+                    }
+                }
+
+                if (otherSampleResults.size() != 0) {
+                    getSampleMetricsFromSampleResults();
+                    sendMetrics();
+                    firstMetricName = null;
+                }
+
+                sampleResults = new ArrayList<>(otherSampleResults);
+                otherSampleResults.clear();
+            } while (counter > 1 || sampleResults.size() != 0);
+        }
     }
 
-    public void getSampleMetricsFromAllSampleResults() {
+    public void getSampleMetricsFromSampleResults() {
         boolean samplersToFilterMatch;
         synchronized (LOCK) {
-            for (SampleResult sampleResult : allSampleResults) {
-                getUserMetrics().add(sampleResult);
-
+            for (SampleResult sampleResult : sameQuerySampleResults) {
                 if(!summaryOnly) {
                     if (useRegexpForSamplersList) {
                         Matcher matcher = pattern.matcher(sampleResult.getSampleLabel());
@@ -256,7 +291,7 @@ public class GraphiteBackendListenerClient extends AbstractBackendListenerClient
                 SamplerMetric cumulatedMetrics = getSamplerMetric(CUMULATED_METRICS);
                 cumulatedMetrics.add(sampleResult);
             }
-            allSampleResults.clear();
+            sameQuerySampleResults.clear();
         }
     }
 
@@ -301,7 +336,8 @@ public class GraphiteBackendListenerClient extends AbstractBackendListenerClient
         this.graphiteMetricsManager = (GraphiteMetricsSender) clazz.newInstance();
         graphiteMetricsManager.setup(graphiteHost, graphitePort, rootMetricsPrefix);
 
-        allSampleResults = new ArrayList<>();
+        otherSampleResults = new ArrayList<>();
+        sameQuerySampleResults = new ArrayList<>();
 
         if (useRegexpForSamplersList) {
             pattern = Pattern.compile(samplersList);
@@ -328,7 +364,7 @@ public class GraphiteBackendListenerClient extends AbstractBackendListenerClient
             LOGGER.error("Error waiting for end of scheduler");
         }
         // Send last set of data before ending
-        getSampleMetricsFromAllSampleResults();
+        getSampleMetricsFromSampleResults();
         sendMetrics();
 
         samplersToFilter.clear();
