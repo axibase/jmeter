@@ -534,7 +534,8 @@ public abstract class AbstractJDBCTestElement extends AbstractTestElement implem
             Map<String, Object> row = null;
             j++;
             for (int i = 1; i <= numColumns; i++) {
-                Object o = rs.getObject(i);
+//                Object o = rs.getObject(i);
+                Object o = 0;
                 if(results != null) {
                     if(row == null) {
                         row = new HashMap<>(numColumns);
@@ -542,10 +543,13 @@ public abstract class AbstractJDBCTestElement extends AbstractTestElement implem
                     }
                     row.put(meta.getColumnLabel(i), o);
                 }
-                if (o instanceof byte[]) {
-                    o = new String((byte[]) o, ENCODING);
-                }
-                sb.append(o);
+//                if (o instanceof byte[]) {
+//                    o = new String((byte[]) o, ENCODING);
+//                }
+
+                // DO NOT SAVE RESULTS TO AVOID OutOfMemory Error
+                //sb.append(o);
+
                 if (i==numColumns){
                     sb.append('\n');
                 } else {
