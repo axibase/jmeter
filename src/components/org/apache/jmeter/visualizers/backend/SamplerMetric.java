@@ -122,6 +122,18 @@ public class SamplerMetric {
         return failures;
     }
 
+    public double getAllStandardDeviation() {
+        return allResponsesStats.getStandardDeviation();
+    }
+
+    public double getOkStandardDeviation() {
+        return okResponsesStats.getStandardDeviation();
+    }
+
+    public double getKoStandardDeviation() {
+        return koResponsesStats.getStandardDeviation();
+    }
+
     /**
      * Get the maximal elapsed time for requests within sliding window
      * 

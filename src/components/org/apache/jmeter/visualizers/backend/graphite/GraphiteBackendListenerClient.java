@@ -77,29 +77,33 @@ public class GraphiteBackendListenerClient extends AbstractBackendListenerClient
     private static final String METRIC_ALL_PREFIX = "a"; //$NON-NLS-1$
     private static final String METRIC_HITS_PREFIX = "h"; //$NON-NLS-1$
 
+    private static final String METRIC_STANDARD_DEVIATION = "stddev"; //$NON-NLS-1$
     private static final String METRIC_COUNT = "count"; //$NON-NLS-1$
     private static final String METRIC_MIN_RESPONSE_TIME = "min"; //$NON-NLS-1$
     private static final String METRIC_MAX_RESPONSE_TIME = "max"; //$NON-NLS-1$
     private static final String METRIC_AVG_RESPONSE_TIME = "avg"; //$NON-NLS-1$
     private static final String METRIC_PERCENTILE = "pct"; //$NON-NLS-1$
 
-    private static final String METRIC_OK_COUNT             = METRIC_OK_PREFIX+METRIC_SEPARATOR+METRIC_COUNT;
-    private static final String METRIC_OK_MIN_RESPONSE_TIME = METRIC_OK_PREFIX+METRIC_SEPARATOR+METRIC_MIN_RESPONSE_TIME;
-    private static final String METRIC_OK_MAX_RESPONSE_TIME = METRIC_OK_PREFIX+METRIC_SEPARATOR+METRIC_MAX_RESPONSE_TIME;
-    private static final String METRIC_OK_AVG_RESPONSE_TIME = METRIC_OK_PREFIX+METRIC_SEPARATOR+METRIC_AVG_RESPONSE_TIME;
-    private static final String METRIC_OK_PERCENTILE_PREFIX = METRIC_OK_PREFIX+METRIC_SEPARATOR+METRIC_PERCENTILE;
+    private static final String METRIC_OK_STANDARD_DEVIATION = METRIC_OK_PREFIX+METRIC_SEPARATOR+METRIC_STANDARD_DEVIATION;
+    private static final String METRIC_OK_COUNT              = METRIC_OK_PREFIX+METRIC_SEPARATOR+METRIC_COUNT;
+    private static final String METRIC_OK_MIN_RESPONSE_TIME  = METRIC_OK_PREFIX+METRIC_SEPARATOR+METRIC_MIN_RESPONSE_TIME;
+    private static final String METRIC_OK_MAX_RESPONSE_TIME  = METRIC_OK_PREFIX+METRIC_SEPARATOR+METRIC_MAX_RESPONSE_TIME;
+    private static final String METRIC_OK_AVG_RESPONSE_TIME  = METRIC_OK_PREFIX+METRIC_SEPARATOR+METRIC_AVG_RESPONSE_TIME;
+    private static final String METRIC_OK_PERCENTILE_PREFIX  = METRIC_OK_PREFIX+METRIC_SEPARATOR+METRIC_PERCENTILE;
 
-    private static final String METRIC_KO_COUNT             = METRIC_KO_PREFIX+METRIC_SEPARATOR+METRIC_COUNT;
-    private static final String METRIC_KO_MIN_RESPONSE_TIME = METRIC_KO_PREFIX+METRIC_SEPARATOR+METRIC_MIN_RESPONSE_TIME;
-    private static final String METRIC_KO_MAX_RESPONSE_TIME = METRIC_KO_PREFIX+METRIC_SEPARATOR+METRIC_MAX_RESPONSE_TIME;
-    private static final String METRIC_KO_AVG_RESPONSE_TIME = METRIC_KO_PREFIX+METRIC_SEPARATOR+METRIC_AVG_RESPONSE_TIME;
-    private static final String METRIC_KO_PERCENTILE_PREFIX = METRIC_KO_PREFIX+METRIC_SEPARATOR+METRIC_PERCENTILE;
+    private static final String METRIC_KO_STANDARD_DEVIATION = METRIC_KO_PREFIX+METRIC_SEPARATOR+METRIC_STANDARD_DEVIATION;
+    private static final String METRIC_KO_COUNT              = METRIC_KO_PREFIX+METRIC_SEPARATOR+METRIC_COUNT;
+    private static final String METRIC_KO_MIN_RESPONSE_TIME  = METRIC_KO_PREFIX+METRIC_SEPARATOR+METRIC_MIN_RESPONSE_TIME;
+    private static final String METRIC_KO_MAX_RESPONSE_TIME  = METRIC_KO_PREFIX+METRIC_SEPARATOR+METRIC_MAX_RESPONSE_TIME;
+    private static final String METRIC_KO_AVG_RESPONSE_TIME  = METRIC_KO_PREFIX+METRIC_SEPARATOR+METRIC_AVG_RESPONSE_TIME;
+    private static final String METRIC_KO_PERCENTILE_PREFIX  = METRIC_KO_PREFIX+METRIC_SEPARATOR+METRIC_PERCENTILE;
 
-    private static final String METRIC_ALL_COUNT             = METRIC_ALL_PREFIX+METRIC_SEPARATOR+METRIC_COUNT;
-    private static final String METRIC_ALL_MIN_RESPONSE_TIME = METRIC_ALL_PREFIX+METRIC_SEPARATOR+METRIC_MIN_RESPONSE_TIME;
-    private static final String METRIC_ALL_MAX_RESPONSE_TIME = METRIC_ALL_PREFIX+METRIC_SEPARATOR+METRIC_MAX_RESPONSE_TIME;
-    private static final String METRIC_ALL_AVG_RESPONSE_TIME = METRIC_ALL_PREFIX+METRIC_SEPARATOR+METRIC_AVG_RESPONSE_TIME;
-    private static final String METRIC_ALL_PERCENTILE_PREFIX = METRIC_ALL_PREFIX+METRIC_SEPARATOR+METRIC_PERCENTILE;
+    private static final String METRIC_ALL_STANDARD_DEVIATION = METRIC_ALL_PREFIX+METRIC_SEPARATOR+METRIC_STANDARD_DEVIATION;
+    private static final String METRIC_ALL_COUNT              = METRIC_ALL_PREFIX+METRIC_SEPARATOR+METRIC_COUNT;
+    private static final String METRIC_ALL_MIN_RESPONSE_TIME  = METRIC_ALL_PREFIX+METRIC_SEPARATOR+METRIC_MIN_RESPONSE_TIME;
+    private static final String METRIC_ALL_MAX_RESPONSE_TIME  = METRIC_ALL_PREFIX+METRIC_SEPARATOR+METRIC_MAX_RESPONSE_TIME;
+    private static final String METRIC_ALL_AVG_RESPONSE_TIME  = METRIC_ALL_PREFIX+METRIC_SEPARATOR+METRIC_AVG_RESPONSE_TIME;
+    private static final String METRIC_ALL_PERCENTILE_PREFIX  = METRIC_ALL_PREFIX+METRIC_SEPARATOR+METRIC_PERCENTILE;
 
     private static final String METRIC_ALL_HITS_COUNT        = METRIC_HITS_PREFIX+METRIC_SEPARATOR+METRIC_COUNT;
 
@@ -150,11 +154,11 @@ public class GraphiteBackendListenerClient extends AbstractBackendListenerClient
             for (Map.Entry<String, SamplerMetric> entry : getMetricsPerSampler().entrySet()) {
                 final String key = entry.getKey();
                 final SamplerMetric metric = entry.getValue();
-                if(key.equals(CUMULATED_METRICS)) {
+                if (!key.equals(CUMULATED_METRICS)) {
+                    addMetrics(timestampInSeconds, AbstractGraphiteMetricsSender.sanitizeString(key), metric);
+                } else {
                     // that is where "ALL" metrics come from -- we don't need it
                     //addMetrics(timestampInSeconds, ALL_CONTEXT_NAME, metric);
-                } else {
-                    addMetrics(timestampInSeconds, AbstractGraphiteMetricsSender.sanitizeString(key), metric);
                 }
                 // We are computing on interval basis so cleanup
                 metric.resetForTimeInterval();
@@ -182,6 +186,7 @@ public class GraphiteBackendListenerClient extends AbstractBackendListenerClient
             graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_ALL_COUNT, Integer.toString(metric.getTotal()));
             graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_ALL_HITS_COUNT, Integer.toString(metric.getHits()));
             if(metric.getSuccesses()>0) {
+                graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_OK_STANDARD_DEVIATION, Double.toString(metric.getOkStandardDeviation()));
                 graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_OK_MIN_RESPONSE_TIME, Double.toString(metric.getOkMinTime()));
                 graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_OK_MAX_RESPONSE_TIME, Double.toString(metric.getOkMaxTime()));
                 graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_OK_AVG_RESPONSE_TIME, Double.toString(metric.getOkMean()));
@@ -192,6 +197,7 @@ public class GraphiteBackendListenerClient extends AbstractBackendListenerClient
                 }
             }
             if(metric.getFailures()>0) {
+                graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_KO_STANDARD_DEVIATION, Double.toString(metric.getKoStandardDeviation()));
                 graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_KO_MIN_RESPONSE_TIME, Double.toString(metric.getKoMinTime()));
                 graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_KO_MAX_RESPONSE_TIME, Double.toString(metric.getKoMaxTime()));
                 graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_KO_AVG_RESPONSE_TIME, Double.toString(metric.getKoMean()));
@@ -201,6 +207,7 @@ public class GraphiteBackendListenerClient extends AbstractBackendListenerClient
                             Double.toString(metric.getKoPercentile(entry.getValue().floatValue())));
                 }
             }
+            graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_ALL_STANDARD_DEVIATION, Double.toString(metric.getAllStandardDeviation()));
             graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_ALL_MIN_RESPONSE_TIME, Double.toString(metric.getAllMinTime()));
             graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_ALL_MAX_RESPONSE_TIME, Double.toString(metric.getAllMaxTime()));
             graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_ALL_AVG_RESPONSE_TIME, Double.toString(metric.getAllMean()));
@@ -272,7 +279,7 @@ public class GraphiteBackendListenerClient extends AbstractBackendListenerClient
         }
     }
 
-    public void getSampleMetricsFromSampleResults() {
+    private void getSampleMetricsFromSampleResults() {
         boolean samplersToFilterMatch;
         synchronized (LOCK) {
             for (SampleResult sampleResult : sameQuerySampleResults) {
