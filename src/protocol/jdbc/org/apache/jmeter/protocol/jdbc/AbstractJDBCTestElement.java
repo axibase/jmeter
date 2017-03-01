@@ -53,7 +53,7 @@ import org.apache.log.Logger;
 
 /**
  * A base class for all JDBC test elements handling the basics of a SQL request.
- * 
+ *
  */
 public abstract class AbstractJDBCTestElement extends AbstractTestElement implements TestStateListener{
     private static final long serialVersionUID = 235L;
@@ -67,7 +67,7 @@ public abstract class AbstractJDBCTestElement extends AbstractTestElement implem
 
     // String used to indicate a null value
     private static final String NULL_MARKER =
-        JMeterUtils.getPropDefault("jdbcsampler.nullmarker","]NULL["); // $NON-NLS-1$
+            JMeterUtils.getPropDefault("jdbcsampler.nullmarker","]NULL["); // $NON-NLS-1$
 
     private static final String INOUT = "INOUT"; // $NON-NLS-1$
 
@@ -122,7 +122,7 @@ public abstract class AbstractJDBCTestElement extends AbstractTestElement implem
     private String queryArguments = ""; // $NON-NLS-1$
     private String queryArgumentsTypes = ""; // $NON-NLS-1$
     private String variableNames = ""; // $NON-NLS-1$
-    private String resultSetHandler = RS_STORE_AS_STRING; 
+    private String resultSetHandler = RS_STORE_AS_STRING;
     private String resultVariable = ""; // $NON-NLS-1$
     private String queryTimeout = ""; // $NON-NLS-1$
 
@@ -141,7 +141,7 @@ public abstract class AbstractJDBCTestElement extends AbstractTestElement implem
      * @return the result of the execute command
      * @throws SQLException if a database error occurs
      * @throws IOException when I/O error occurs
-     * @throws UnsupportedOperationException if the user provided incorrect query type 
+     * @throws UnsupportedOperationException if the user provided incorrect query type
      */
     protected byte[] execute(Connection conn) throws SQLException, IOException, UnsupportedOperationException {
         return execute(conn,  new SampleResult());
@@ -281,12 +281,12 @@ public abstract class AbstractJDBCTestElement extends AbstractTestElement implem
             }
             String[] varnames = getVariableNames().split(COMMA);
             if(varnames.length > 0) {
-            JMeterVariables jmvars = getThreadContext().getVariables();
+                JMeterVariables jmvars = getThreadContext().getVariables();
                 for(int i = 0; i < varnames.length && i < outputValues.size(); i++) {
                     String name = varnames[i].trim();
                     if (name.length()>0){ // Save the value in the variable if present
                         Object o = outputValues.get(i);
-                        if( o instanceof java.sql.ResultSet ) { 
+                        if( o instanceof java.sql.ResultSet ) {
                             putIntoVar(jmvars, name, (java.sql.ResultSet) o);
                         } else if (o instanceof java.sql.Clob) {
                             putIntoVar(jmvars, name, (java.sql.Clob) o);
@@ -304,7 +304,7 @@ public abstract class AbstractJDBCTestElement extends AbstractTestElement implem
     }
 
     private void putIntoVar(final JMeterVariables jmvars, final String name,
-            final ResultSet resultSet) throws SQLException {
+                            final ResultSet resultSet) throws SQLException {
         if (RS_STORE_AS_OBJECT.equals(resultSetHandler)) {
             jmvars.putObject(name, resultSet);
         } else if (RS_COUNT_RECORDS.equals(resultSetHandler)) {
@@ -316,7 +316,7 @@ public abstract class AbstractJDBCTestElement extends AbstractTestElement implem
     }
 
     private void putIntoVar(final JMeterVariables jmvars, final String name,
-            final Clob clob) throws SQLException {
+                            final Clob clob) throws SQLException {
         try {
             if (clob.length() > MAX_RETAIN_SIZE) {
                 jmvars.put(
@@ -333,7 +333,7 @@ public abstract class AbstractJDBCTestElement extends AbstractTestElement implem
     }
 
     private void putIntoVar(final JMeterVariables jmvars, final String name,
-            final Blob blob) throws SQLException {
+                            final Blob blob) throws SQLException {
         if (RS_STORE_AS_OBJECT.equals(resultSetHandler)) {
             try {
                 long length = Math.max(blob.length(), MAX_RETAIN_SIZE);
@@ -409,57 +409,57 @@ public abstract class AbstractJDBCTestElement extends AbstractTestElement implem
 
     private void setArgument(PreparedStatement pstmt, String argument, int targetSqlType, int index) throws SQLException {
         switch (targetSqlType) {
-        case Types.INTEGER:
-            pstmt.setInt(index, Integer.parseInt(argument));
-            break;
-        case Types.DECIMAL:
-        case Types.NUMERIC:
-            pstmt.setBigDecimal(index, new BigDecimal(argument));
-            break;
-        case Types.DOUBLE:
-        case Types.FLOAT:
-            pstmt.setDouble(index, Double.parseDouble(argument));
-            break;
-        case Types.CHAR:
-        case Types.LONGVARCHAR:
-        case Types.VARCHAR:
-            pstmt.setString(index, argument);
-            break;
-        case Types.BIT:
-        case Types.BOOLEAN:
-            pstmt.setBoolean(index, Boolean.parseBoolean(argument));
-            break;
-        case Types.BIGINT:
-            pstmt.setLong(index, Long.parseLong(argument));
-            break;
-        case Types.DATE:
-            pstmt.setDate(index, Date.valueOf(argument));
-            break;
-        case Types.REAL:
-            pstmt.setFloat(index, Float.parseFloat(argument));
-            break;
-        case Types.TINYINT:
-            pstmt.setByte(index, Byte.parseByte(argument));
-            break;
-        case Types.SMALLINT:
-            pstmt.setShort(index, Short.parseShort(argument));
-            break;
-        case Types.TIMESTAMP:
-            pstmt.setTimestamp(index, Timestamp.valueOf(argument));
-            break;
-        case Types.TIME:
-            pstmt.setTime(index, Time.valueOf(argument));
-            break;
-        case Types.BINARY:
-        case Types.VARBINARY:
-        case Types.LONGVARBINARY:
-            pstmt.setBytes(index, argument.getBytes());
-            break;
-        case Types.NULL:
-            pstmt.setNull(index, targetSqlType);
-            break;
-        default:
-            pstmt.setObject(index, argument, targetSqlType);
+            case Types.INTEGER:
+                pstmt.setInt(index, Integer.parseInt(argument));
+                break;
+            case Types.DECIMAL:
+            case Types.NUMERIC:
+                pstmt.setBigDecimal(index, new BigDecimal(argument));
+                break;
+            case Types.DOUBLE:
+            case Types.FLOAT:
+                pstmt.setDouble(index, Double.parseDouble(argument));
+                break;
+            case Types.CHAR:
+            case Types.LONGVARCHAR:
+            case Types.VARCHAR:
+                pstmt.setString(index, argument);
+                break;
+            case Types.BIT:
+            case Types.BOOLEAN:
+                pstmt.setBoolean(index, Boolean.parseBoolean(argument));
+                break;
+            case Types.BIGINT:
+                pstmt.setLong(index, Long.parseLong(argument));
+                break;
+            case Types.DATE:
+                pstmt.setDate(index, Date.valueOf(argument));
+                break;
+            case Types.REAL:
+                pstmt.setFloat(index, Float.parseFloat(argument));
+                break;
+            case Types.TINYINT:
+                pstmt.setByte(index, Byte.parseByte(argument));
+                break;
+            case Types.SMALLINT:
+                pstmt.setShort(index, Short.parseShort(argument));
+                break;
+            case Types.TIMESTAMP:
+                pstmt.setTimestamp(index, Timestamp.valueOf(argument));
+                break;
+            case Types.TIME:
+                pstmt.setTime(index, Time.valueOf(argument));
+                break;
+            case Types.BINARY:
+            case Types.VARBINARY:
+            case Types.LONGVARBINARY:
+                pstmt.setBytes(index, argument.getBytes());
+                break;
+            case Types.NULL:
+                pstmt.setNull(index, targetSqlType);
+                break;
+            default:
+                pstmt.setObject(index, argument, targetSqlType);
         }
     }
 
@@ -519,7 +519,7 @@ public abstract class AbstractJDBCTestElement extends AbstractTestElement implem
                 sb.append('\t');
             }
         }
-        
+
 
         JMeterVariables jmvars = getThreadContext().getVariables();
         String[] varNames = getVariableNames().split(COMMA);
@@ -611,8 +611,8 @@ public abstract class AbstractJDBCTestElement extends AbstractTestElement implem
         } catch (SQLException e) {
             log.warn("Error closing ResultSet", e);
         }
-    }    
-    
+    }
+
     /**
      * @return the integer representation queryTimeout
      */
@@ -751,10 +751,10 @@ public abstract class AbstractJDBCTestElement extends AbstractTestElement implem
      */
     public void setResultVariable(String resultVariable) {
         this.resultVariable = resultVariable;
-    }    
+    }
 
 
-    /** 
+    /**
      * {@inheritDoc}
      * @see org.apache.jmeter.testelement.TestStateListener#testStarted()
      */

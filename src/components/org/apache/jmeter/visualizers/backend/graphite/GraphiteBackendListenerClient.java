@@ -83,6 +83,7 @@ public class GraphiteBackendListenerClient extends AbstractBackendListenerClient
     private static final String METRIC_MAX_RESPONSE_TIME = "max"; //$NON-NLS-1$
     private static final String METRIC_AVG_RESPONSE_TIME = "avg"; //$NON-NLS-1$
     private static final String METRIC_PERCENTILE = "pct"; //$NON-NLS-1$
+    private static final String METRIC_NUMBER_OF_ROWS = "rows";
 
     private static final String METRIC_OK_STANDARD_DEVIATION = METRIC_OK_PREFIX+METRIC_SEPARATOR+METRIC_STANDARD_DEVIATION;
     private static final String METRIC_OK_COUNT              = METRIC_OK_PREFIX+METRIC_SEPARATOR+METRIC_COUNT;
@@ -185,6 +186,7 @@ public class GraphiteBackendListenerClient extends AbstractBackendListenerClient
             graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_KO_COUNT, Integer.toString(metric.getFailures()));
             graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_ALL_COUNT, Integer.toString(metric.getTotal()));
             graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_ALL_HITS_COUNT, Integer.toString(metric.getHits()));
+            graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_NUMBER_OF_ROWS, Integer.toString(metric.getNumberOfRows()));
             if(metric.getSuccesses()>0) {
                 graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_OK_STANDARD_DEVIATION, Double.toString(metric.getOkStandardDeviation()));
                 graphiteMetricsManager.addMetric(timestampInSeconds, contextName, METRIC_OK_MIN_RESPONSE_TIME, Double.toString(metric.getOkMinTime()));

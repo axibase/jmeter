@@ -22,23 +22,26 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.jmeter.control.TransactionController;
 import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.util.JMeterUtils;
+import org.apache.jorphan.logging.LoggingManager;
+import org.apache.log.Logger;
 
 /**
  * Sampler metric
  * @since 2.13
  */
 public class SamplerMetric {
-    private static final int SLIDING_WINDOW_SIZE = JMeterUtils.getPropDefault("backend_metrics_window", 100); //$NON-NLS-1$
+    //private static final int SLIDING_WINDOW_SIZE = JMeterUtils.getPropDefault("backend_metrics_window", 100); //$NON-NLS-1$
     
     // Response times for OK samples
     // Limit to sliding window of SLIDING_WINDOW_SIZE values 
-    private DescriptiveStatistics okResponsesStats = new DescriptiveStatistics(SLIDING_WINDOW_SIZE);
+    private DescriptiveStatistics okResponsesStats = new DescriptiveStatistics();
     // Response times for KO samples
     // Limit to sliding window of SLIDING_WINDOW_SIZE values 
-    private DescriptiveStatistics koResponsesStats = new DescriptiveStatistics(SLIDING_WINDOW_SIZE);
+    private DescriptiveStatistics koResponsesStats = new DescriptiveStatistics();
     // Response times for All samples
     // Limit to sliding window of SLIDING_WINDOW_SIZE values 
-    private DescriptiveStatistics allResponsesStats = new DescriptiveStatistics(SLIDING_WINDOW_SIZE);
+    private DescriptiveStatistics allResponsesStats = new DescriptiveStatistics();
+    private int numberOfRows;
     private int successes;
     private int failures;
     private int hits;
@@ -54,6 +57,7 @@ public class SamplerMetric {
      */
     public synchronized void add(SampleResult result) {
         if(result.isSuccessful()) {
+            numberOfRows = countLines(result.getResponseDataAsString());
             successes+=result.getSampleCount()-result.getErrorCount();
         } else {
             failures+=result.getErrorCount();
@@ -68,6 +72,18 @@ public class SamplerMetric {
             koResponsesStats.addValue(time);
         }
         addHits(result);
+    }
+
+    private int countLines(String str) {
+        if(str == null || str.isEmpty()) {
+            return 0;
+        }
+        int lines = 1;
+        int pos = 0;
+        while ((pos = str.indexOf("\n", pos) + 1) != 0) {
+            lines++;
+        }
+        return lines >= 2 ? lines - 2 : 0;
     }
 
     /**
@@ -263,5 +279,9 @@ public class SamplerMetric {
      */
     public int getHits() {
         return hits;
+    }
+
+    public int getNumberOfRows() {
+        return numberOfRows;
     }
 }
