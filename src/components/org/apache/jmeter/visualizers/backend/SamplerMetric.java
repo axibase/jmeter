@@ -30,6 +30,7 @@ import org.apache.log.Logger;
  * @since 2.13
  */
 public class SamplerMetric {
+    static final Logger log = LoggingManager.getLoggerForClass();
     //private static final int SLIDING_WINDOW_SIZE = JMeterUtils.getPropDefault("backend_metrics_window", 100); //$NON-NLS-1$
     
     // Response times for OK samples
@@ -58,8 +59,15 @@ public class SamplerMetric {
     public synchronized void add(SampleResult result) {
         if(result.isSuccessful()) {
             if (numberOfRows == -1) {
-                numberOfRows = countLines(result.getResponseDataAsString());
+                String responseData = result.getResponseDataAsString();
+                if (responseData.startsWith("[{")) {
+                    numberOfRows = 1;
+                    log.info(String.valueOf(numberOfRows));
+                } else {
+                    numberOfRows = countLines(responseData);
+                }
             }
+
             successes+=result.getSampleCount()-result.getErrorCount();
         } else {
             failures+=result.getErrorCount();
