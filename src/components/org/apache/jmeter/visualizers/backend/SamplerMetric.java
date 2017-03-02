@@ -41,7 +41,7 @@ public class SamplerMetric {
     // Response times for All samples
     // Limit to sliding window of SLIDING_WINDOW_SIZE values 
     private DescriptiveStatistics allResponsesStats = new DescriptiveStatistics();
-    private int numberOfRows;
+    private int numberOfRows = -1;
     private int successes;
     private int failures;
     private int hits;
@@ -57,7 +57,9 @@ public class SamplerMetric {
      */
     public synchronized void add(SampleResult result) {
         if(result.isSuccessful()) {
-            numberOfRows = countLines(result.getResponseDataAsString());
+            if (numberOfRows == -1) {
+                numberOfRows = countLines(result.getResponseDataAsString());
+            }
             successes+=result.getSampleCount()-result.getErrorCount();
         } else {
             failures+=result.getErrorCount();
